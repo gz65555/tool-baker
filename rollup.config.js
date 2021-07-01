@@ -49,7 +49,7 @@ export default {
 		{
 			file: pkg.browser,
 			format: "umd",
-			name,
+			name: "@oasisEngine/baker",
 			globals: {
 				"oasis-engine": "oasisEngine",
 			},

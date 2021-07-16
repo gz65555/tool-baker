@@ -1,6 +1,7 @@
 import {
   AssetPromise,
   AssetType,
+  Color,
   GLCapabilityType,
   Loader,
   LoadItem,
@@ -8,9 +9,9 @@ import {
   ResourceManager,
   TextureCubeFace,
   TextureCubeMap,
-  TextureFormat
-} from "@oasis-engine/core";
-import { Color, Vector3 } from "@oasis-engine/math";
+  TextureFormat,
+  Vector3
+} from "oasis-engine";
 
 interface IHDRHeader {
   /**

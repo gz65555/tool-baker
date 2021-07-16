@@ -1,16 +1,17 @@
 {
-	"compilerOptions": {
-		"target": "ESNext",
-		"module": "ESNext",
-		"lib": ["ESNext", "DOM"],
-		"moduleResolution": "Node",
-		"declarationDir": "types",
-		"declaration": true,
-		"skipLibCheck": true,
-		"strict": true,
-		"resolveJsonModule": true,
-		"esModuleInterop": true,
-		"emitDeclarationOnly": true
-	},
-	"include": ["./src"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "Node",
+    "declarationDir": "types",
+    "declaration": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "emitDeclarationOnly": true,
+    "experimentalDecorators": true
+  },
+  "include": ["./src"]
 }

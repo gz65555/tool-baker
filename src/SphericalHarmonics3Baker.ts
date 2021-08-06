@@ -15,7 +15,7 @@ export class SphericalHarmonics3Baker {
    * @param out - SH3 for output
    */
   static fromTextureCubeMap(texture: TextureCubeMap, out: SphericalHarmonics3): void {
-    out.clear();
+    out.scale(0);
 
     const engine = texture.engine;
     const isHDR = texture._isHDR;
@@ -92,7 +92,7 @@ export class SphericalHarmonics3Baker {
            */
           const solidAngle = 4 / (direction.length() * direction.lengthSquared());
           solidAngleSum += solidAngle;
-          out.addRadiance(color, direction.normalize(), solidAngle);
+          out.addLight(direction.normalize(), color, solidAngle);
           u += texelSize;
         }
         v += texelSize;

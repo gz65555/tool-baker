@@ -1,4 +1,5 @@
-import { Color, GLCapabilityType, SphericalHarmonics3, TextureCubeFace, TextureCubeMap, Vector3 } from "oasis-engine";
+import { Color, SphericalHarmonics3, TextureCubeFace, TextureCubeMap, Vector3 } from "oasis-engine";
+import { DecodeMode } from "./enums/DecodeMode";
 
 /**
  * Bake irradiance into spherical harmonics3.
@@ -14,21 +15,14 @@ export class SphericalHarmonics3Baker {
    * @param texture - Cube texture
    * @param out - SH3 for output
    */
-  static fromTextureCubeMap(texture: TextureCubeMap, out: SphericalHarmonics3): void {
+  static fromTextureCubeMap(texture: TextureCubeMap, decodeMode: DecodeMode, out: SphericalHarmonics3): void {
     out.scale(0);
-
-    const engine = texture.engine;
-    const isHDR = texture._isHDR;
-    const supportFloatTexture = engine._hardwareRenderer.canIUse(GLCapabilityType.textureFloat);
 
     const channelLength = 4;
     const textureSize = texture.width;
-    const data =
-      isHDR && supportFloatTexture
-        ? new Float32Array(textureSize * textureSize * channelLength)
-        : new Uint8Array(textureSize * textureSize * channelLength); // read pixel always return rgba
-    const color = SphericalHarmonics3Baker._tempColor;
-    const direction = SphericalHarmonics3Baker._tempVector;
+    const data = new Uint8Array(textureSize * textureSize * channelLength); // read pixel always return rgba
+    const color = this._tempColor;
+    const direction = this._tempVector;
     const texelSize = 2 / textureSize; // convolution is in the space of [-1, 1]
 
     let solidAngleSum = 0; // ideal value is 4 * pi
@@ -41,12 +35,19 @@ export class SphericalHarmonics3Baker {
         for (let x = 0; x < textureSize; x++) {
           const dataOffset = y * textureSize * channelLength + x * channelLength;
 
-          if (isHDR) {
-            // Linear
-            if (supportFloatTexture) {
+          switch (decodeMode) {
+            case DecodeMode.Linear:
               color.setValue(data[dataOffset], data[dataOffset + 1], data[dataOffset + 2], 0);
-            } else {
-              // RGBE
+              break;
+            case DecodeMode.Gamma:
+              color.setValue(
+                Color.gammaToLinearSpace(data[dataOffset] / 255),
+                Color.gammaToLinearSpace(data[dataOffset + 1] / 255),
+                Color.gammaToLinearSpace(data[dataOffset + 2] / 255),
+                0
+              );
+              break;
+            case DecodeMode.RGBE:
               this._RGBEToLinear(
                 data[dataOffset],
                 data[dataOffset + 1],
@@ -54,15 +55,16 @@ export class SphericalHarmonics3Baker {
                 data[dataOffset + 3],
                 color
               );
-            }
-          } else {
-            // Gamma
-            color.setValue(
-              Color.gammaToLinearSpace(data[dataOffset] / 255),
-              Color.gammaToLinearSpace(data[dataOffset + 1] / 255),
-              Color.gammaToLinearSpace(data[dataOffset + 2] / 255),
-              0
-            );
+              break;
+            case DecodeMode.RGBM:
+              this._RGBMToLinear(
+                data[dataOffset],
+                data[dataOffset + 1],
+                data[dataOffset + 2],
+                data[dataOffset + 3],
+                color
+              );
+              break;
           }
 
           switch (faceIndex) {
@@ -88,7 +90,7 @@ export class SphericalHarmonics3Baker {
 
           /**
            * dA = cos = S / r = 4 / r
-           * dw =  dA / r2 = 4 / r / r2
+           * dw = dA / r2 = 4 / r / r2
            */
           const solidAngle = 4 / (direction.length() * direction.lengthSquared());
           solidAngleSum += solidAngle;
@@ -109,5 +111,10 @@ export class SphericalHarmonics3Baker {
       const scale = Math.pow(2, a - 128) / 255;
       out.setValue(r * scale, g * scale, b * scale, 1);
     }
+  }
+
+  private static _RGBMToLinear(r: number, g: number, b: number, a: number, out: Color) {
+    const scale = a / 13005; // (a * 5) / 255 / 255;
+    out.setValue(r * scale, g * scale, b * scale, 1);
   }
 }

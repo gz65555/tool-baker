@@ -5,7 +5,6 @@ export default `
 varying vec2 v_uv;
 
 uniform samplerCube environmentMap;
-uniform vec2 textureInfo;
 uniform float face;
 uniform float lodRoughness;
 
@@ -13,14 +12,7 @@ uniform float lodRoughness;
 #define RECIPROCAL_PI 0.31830988618
 
 const uint SAMPLE_COUNT = 4096u;
-const float SAMPLE_COUNT_FLOAT = float(SAMPLE_COUNT);
-const float SAMPLE_COUNT_FLOAT_INVERSED = 1. / SAMPLE_COUNT_FLOAT;
 
-const float K = 4.;
-
-float log4(float x) {
-    return log2(x) / 2.;
-}
 
 float pow2( const in float x ) {
     return x * x;
@@ -30,10 +22,43 @@ vec4 RGBEToLinear(vec4 value) {
     return vec4( step(0.0, value.a) * value.rgb * exp2( value.a * 255.0 - 128.0 ), 1.0 );
 }
 
-vec4 LinearToRGBE( in vec4 value ) {
+vec4 RGBMToLinear(vec4 value, float maxRange ) {
+    return vec4( value.rgb * value.a * maxRange, 1.0 );
+}
+
+vec4 gammaToLinear(vec4 srgbIn){
+    return vec4( pow(srgbIn.rgb, vec3(2.2)), srgbIn.a);
+}
+
+
+vec4 toLinear(vec4 color){
+    vec4 linear;
+    #if (DECODE_MODE == 1)
+        linear = color;
+    #elif (DECODE_MODE == 2)
+        linear = gammaToLinear(color);
+    #elif (DECODE_MODE == 3)
+        linear = RGBEToLinear(color);
+    #elif (DECODE_MODE == 4)
+        linear = RGBMToLinear(color, 5.0);
+    #endif
+
+    return linear;
+}
+
+
+vec4 linearToRGBE(vec4 value ) {
 	float maxComponent = max( max( value.r, value.g ), value.b );
 	float fExp = clamp( ceil( log2( maxComponent ) ), -128.0, 127.0 );
 	return vec4( value.rgb / exp2( fExp ), ( fExp + 128.0 ) / 255.0 );
+}
+
+
+vec4 LinearToRGBM(vec4 value, float maxRange ) {
+    float maxRGB = max( value.r, max( value.g, value.b ) );
+    float M = clamp( maxRGB / maxRange, 0.0, 1.0 );
+    M = ceil( M * 255.0 ) / 255.0;
+    return vec4( value.rgb / ( M * maxRange ), M );
 }
 
 // Microfacet Models for Refraction through Rough Surfaces - equation (33)
@@ -48,6 +73,7 @@ float D_GGX( const in float alpha, const in float dotNH ) {
 	return RECIPROCAL_PI * a2 / pow2( denom );
 
 }
+
 
 ${hammersley}
 ${importanceSampling}
@@ -69,11 +95,7 @@ vec3 specular(vec3 N) {
         if(NdotL > 0.0)
         {
             vec4 samplerColor = texture(environmentMap, L);
-            vec3 linearColor = samplerColor.rgb;
-            
-            #ifdef RGBE
-                linearColor = RGBEToLinear(samplerColor).rgb;
-            #endif
+            vec3 linearColor = toLinear(samplerColor).rgb;
 
             prefilteredColor += linearColor * NdotL;
             totalWeight      += NdotL;
@@ -110,14 +132,13 @@ void main()
     dir = normalize(dir);
 
     if (lodRoughness == 0.) {
-        gl_FragColor = textureCube(environmentMap, dir);
+        gl_FragColor = toLinear(textureCube(environmentMap, dir));
     } else {
         vec3 integratedBRDF = specular(dir);
         gl_FragColor = vec4(integratedBRDF, 1.);
-
-        #ifdef RGBE
-            gl_FragColor = LinearToRGBE(gl_FragColor);
-        #endif
     }
+    
+    gl_FragColor = LinearToRGBM(gl_FragColor, 5.0);
+
 }
 `;

@@ -2,14 +2,12 @@ import {
   AssetPromise,
   AssetType,
   Color,
-  GLCapabilityType,
   Loader,
   LoadItem,
   resourceLoader,
   ResourceManager,
   TextureCubeFace,
   TextureCubeMap,
-  TextureFormat,
   Vector3
 } from "oasis-engine";
 
@@ -111,7 +109,7 @@ class HDRLoader extends Loader<TextureCubeMap> {
     pixels: Uint8Array,
     inputWidth: number,
     inputHeight: number
-  ) {
+  ): Uint8Array {
     const textureArray = new Uint8Array(texSize * texSize * 4);
     const rotDX1 = this._tempVector3
       .setValue(0, 0, 0)
@@ -348,7 +346,6 @@ class HDRLoader extends Loader<TextureCubeMap> {
   load(item: LoadItem, resourceManager: ResourceManager): AssetPromise<TextureCubeMap> {
     return new AssetPromise((resolve, reject) => {
       const engine = resourceManager.engine;
-      const supportFloatTexture = engine._hardwareRenderer.canIUse(GLCapabilityType.textureFloat);
       const cubeSize = HDRLoader._cubeSize;
 
       resourceManager
@@ -361,43 +358,10 @@ class HDRLoader extends Loader<TextureCubeMap> {
           const { width, height, dataPosition } = HDRLoader._parseHeader(uint8Array);
           const pixels = HDRLoader._readPixels(uint8Array.subarray(dataPosition), width, height);
           const cubeMapData = HDRLoader._convertToCubemap(pixels, width, height, cubeSize);
-          const floatCubeMapData = new Array<Float32Array>(6);
-          const texture = new TextureCubeMap(
-            engine,
-            cubeSize,
-            supportFloatTexture ? TextureFormat.R32G32B32A32 : undefined
-          );
-          texture._isHDR = true;
-
-          // convert to float texture if enabled
-          if (supportFloatTexture) {
-            for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
-              const uint8Array = cubeMapData[faceIndex];
-              const length = uint8Array.length;
-              const floatArray = new Float32Array(length);
-              floatCubeMapData[faceIndex] = floatArray;
-
-              for (let pixel = 0; pixel < length; pixel += 4) {
-                const r = uint8Array[pixel];
-                const g = uint8Array[pixel + 1];
-                const b = uint8Array[pixel + 2];
-                const a = uint8Array[pixel + 3];
-                const scale = Math.pow(2, a - 128) / 255;
-
-                floatArray[pixel] = r * scale;
-                floatArray[pixel + 1] = g * scale;
-                floatArray[pixel + 2] = b * scale;
-                floatArray[pixel + 3] = 1;
-              }
-            }
-          }
+          const texture = new TextureCubeMap(engine, cubeSize);
 
           for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
-            texture.setPixelBuffer(
-              TextureCubeFace.PositiveX + faceIndex,
-              (supportFloatTexture ? floatCubeMapData : cubeMapData)[faceIndex],
-              0
-            );
+            texture.setPixelBuffer(TextureCubeFace.PositiveX + faceIndex, cubeMapData[faceIndex], 0);
           }
           texture.generateMipmaps();
           resolve(texture);

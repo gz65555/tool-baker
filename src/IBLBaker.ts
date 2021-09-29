@@ -1,10 +1,8 @@
 import {
   Camera,
-  GLCapabilityType,
   Material,
   MeshRenderer,
   PrimitiveMesh,
-  RenderBufferColorFormat,
   RenderBufferDepthFormat,
   RenderColorTexture,
   RenderTarget,
@@ -12,9 +10,9 @@ import {
   Shader,
   TextureCubeFace,
   TextureCubeMap,
-  TextureFilterMode,
-  Vector2
+  TextureFilterMode
 } from "oasis-engine";
+import { DecodeMode } from "./enums/DecodeMode";
 import frag from "./shader/ibl_frag";
 import vertex from "./shader/vertex";
 
@@ -29,14 +27,12 @@ export class IBLBaker {
    * Bake from Cube texture.
    * @param texture - Cube texture
    */
-  static fromTextureCubeMap(texture: TextureCubeMap): RenderColorTexture {
+  static fromTextureCubeMap(texture: TextureCubeMap, decodeMode: DecodeMode): RenderColorTexture {
     const engine = texture.engine;
     const originalScene = engine.sceneManager.activeScene;
     const isPaused = engine.isPaused;
     const bakerSize = texture.width;
     const bakerMipmapCount = texture.mipmapCount;
-    const isHDR = texture._isHDR;
-    const supportFloatTexture = engine._hardwareRenderer.canIUse(GLCapabilityType.textureFloat);
 
     engine.pause();
 
@@ -52,17 +48,8 @@ export class IBLBaker {
     bakerRenderer.mesh = PrimitiveMesh.createPlane(engine, 2, 2);
     bakerRenderer.setMaterial(bakerMaterial);
 
-    const renderColorTexture = new RenderColorTexture(
-      engine,
-      bakerSize,
-      bakerSize,
-      isHDR && supportFloatTexture ? RenderBufferColorFormat.R32G32B32A32 : undefined,
-      true,
-      true
-    );
+    const renderColorTexture = new RenderColorTexture(engine, bakerSize, bakerSize, undefined, true, true);
     renderColorTexture.filterMode = TextureFilterMode.Trilinear;
-    renderColorTexture._isHDR = isHDR;
-
     const renderTarget = new RenderTarget(
       engine,
       bakerSize,
@@ -74,10 +61,19 @@ export class IBLBaker {
 
     // render
     bakerShaderData.setTexture("environmentMap", texture);
-    bakerShaderData.setVector2("textureInfo", new Vector2(bakerSize, bakerMipmapCount - 1));
-    // downgrade to RGBE if float texture not supported
-    if (isHDR && !supportFloatTexture) {
-      bakerShaderData.enableMacro("RGBE");
+    switch (decodeMode) {
+      case DecodeMode.Linear:
+        bakerShaderData.enableMacro("DECODE_MODE", "1");
+        break;
+      case DecodeMode.Gamma:
+        bakerShaderData.enableMacro("DECODE_MODE", "2");
+        break;
+      case DecodeMode.RGBE:
+        bakerShaderData.enableMacro("DECODE_MODE", "3");
+        break;
+      case DecodeMode.RGBM:
+        bakerShaderData.enableMacro("DECODE_MODE", "4");
+        break;
     }
 
     for (let face = 0; face < 6; face++) {

@@ -28,7 +28,7 @@ export class SphericalHarmonics3Baker {
     let solidAngleSum = 0; // ideal value is 4 * pi
 
     for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
-      texture.getPixelBuffer(TextureCubeFace.PositiveX + faceIndex, 0, 0, textureSize, textureSize, data);
+      texture.getPixelBuffer(TextureCubeFace.PositiveX + faceIndex, 0, 0, textureSize, textureSize, 0, data);
       let v = texelSize * 0.5 - 1;
       for (let y = 0; y < textureSize; y++) {
         let u = texelSize * 0.5 - 1;

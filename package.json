@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.2",
   "name": "@oasis-engine/baker",
   "browser": "dist/index.browser.js",
   "module": "dist/index.module.js",
@@ -29,5 +29,9 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "files": [
+    "dist/**/*",
+    "types/**/*"
+  ]
 }

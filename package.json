@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.4",
   "name": "@oasis-engine/baker",
   "browser": "dist/index.browser.js",
   "module": "dist/index.module.js",
@@ -25,7 +25,7 @@
     "vite": "^2.3.8"
   },
   "dependencies": {
-    "oasis-engine": "^0.5.0"
+    "oasis-engine": "^0.6.0"
   },
   "publishConfig": {
     "access": "public"

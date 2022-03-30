@@ -3,14 +3,13 @@ import {
   Material,
   MeshRenderer,
   PrimitiveMesh,
-  RenderBufferDepthFormat,
-  RenderColorTexture,
   RenderTarget,
   Scene,
   Shader,
   TextureCubeFace,
-  TextureCubeMap,
-  TextureFilterMode
+  TextureCube,
+  TextureFilterMode,
+  TextureFormat
 } from "oasis-engine";
 import { DecodeMode } from "./enums/DecodeMode";
 import frag from "./shader/ibl_frag";
@@ -27,7 +26,7 @@ export class IBLBaker {
    * Bake from Cube texture.
    * @param texture - Cube texture
    */
-  static fromTextureCubeMap(texture: TextureCubeMap, decodeMode: DecodeMode): RenderColorTexture {
+  static fromTextureCubeMap(texture: TextureCube, decodeMode: DecodeMode): TextureCube {
     const engine = texture.engine;
     const originalScene = engine.sceneManager.activeScene;
     const isPaused = engine.isPaused;
@@ -48,15 +47,10 @@ export class IBLBaker {
     bakerRenderer.mesh = PrimitiveMesh.createPlane(engine, 2, 2);
     bakerRenderer.setMaterial(bakerMaterial);
 
-    const renderColorTexture = new RenderColorTexture(engine, bakerSize, bakerSize, undefined, true, true);
+    const renderColorTexture = new TextureCube(engine, bakerSize);
     renderColorTexture.filterMode = TextureFilterMode.Trilinear;
-    const renderTarget = new RenderTarget(
-      engine,
-      bakerSize,
-      bakerSize,
-      renderColorTexture,
-      RenderBufferDepthFormat.Depth
-    );
+    const renderTarget = new RenderTarget(engine, bakerSize, bakerSize, renderColorTexture, TextureFormat.Depth);
+    renderTarget.autoGenerateMipmaps = false;
     bakerCamera.renderTarget = renderTarget;
 
     // render

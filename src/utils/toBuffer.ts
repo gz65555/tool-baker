@@ -1,6 +1,6 @@
-import { SphericalHarmonics3, TextureCubeFace, TextureCubeMap } from "oasis-engine";
+import { SphericalHarmonics3, TextureCubeFace, TextureCube } from "oasis-engine";
 
-export function toBuffer(bakedTexture: TextureCubeMap, sh: SphericalHarmonics3): ArrayBuffer {
+export function toBuffer(bakedTexture: TextureCube, sh: SphericalHarmonics3): ArrayBuffer {
   const size = bakedTexture.width;
   const mipmapCount = bakedTexture.mipmapCount;
 

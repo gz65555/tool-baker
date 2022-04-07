@@ -7,7 +7,7 @@ import {
   resourceLoader,
   ResourceManager,
   TextureCubeFace,
-  TextureCubeMap,
+  TextureCube,
   Vector3
 } from "oasis-engine";
 
@@ -28,7 +28,7 @@ interface IHDRHeader {
 
 // @ts-ignore
 @resourceLoader("HDR", ["hdr"])
-class HDRLoader extends Loader<TextureCubeMap> {
+class HDRLoader extends Loader<TextureCube> {
   private static _cubeSize = 256;
 
   private static _faceRight = [
@@ -343,7 +343,7 @@ class HDRLoader extends Loader<TextureCubeMap> {
     return data_rgba;
   }
 
-  load(item: LoadItem, resourceManager: ResourceManager): AssetPromise<TextureCubeMap> {
+  load(item: LoadItem, resourceManager: ResourceManager): AssetPromise<TextureCube> {
     return new AssetPromise((resolve, reject) => {
       const engine = resourceManager.engine;
       const cubeSize = HDRLoader._cubeSize;
@@ -358,7 +358,7 @@ class HDRLoader extends Loader<TextureCubeMap> {
           const { width, height, dataPosition } = HDRLoader._parseHeader(uint8Array);
           const pixels = HDRLoader._readPixels(uint8Array.subarray(dataPosition), width, height);
           const cubeMapData = HDRLoader._convertToCubemap(pixels, width, height, cubeSize);
-          const texture = new TextureCubeMap(engine, cubeSize);
+          const texture = new TextureCube(engine, cubeSize);
 
           for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
             texture.setPixelBuffer(TextureCubeFace.PositiveX + faceIndex, cubeMapData[faceIndex], 0);

@@ -30,8 +30,7 @@ export class IBLBaker {
     const engine = texture.engine;
     const originalScene = engine.sceneManager.activeScene;
     const isPaused = engine.isPaused;
-    const bakerSize = texture.width;
-    const bakerMipmapCount = texture.mipmapCount;
+    const bakerSize = 256;
 
     engine.pause();
 
@@ -48,6 +47,8 @@ export class IBLBaker {
     bakerRenderer.setMaterial(bakerMaterial);
 
     const renderColorTexture = new TextureCube(engine, bakerSize);
+    const bakerMipmapCount = renderColorTexture.mipmapCount;
+
     renderColorTexture.filterMode = TextureFilterMode.Trilinear;
     const renderTarget = new RenderTarget(engine, bakerSize, bakerSize, renderColorTexture, TextureFormat.Depth);
     renderTarget.autoGenerateMipmaps = false;
@@ -55,20 +56,7 @@ export class IBLBaker {
 
     // render
     bakerShaderData.setTexture("environmentMap", texture);
-    switch (decodeMode) {
-      case DecodeMode.Linear:
-        bakerShaderData.enableMacro("DECODE_MODE", "1");
-        break;
-      case DecodeMode.Gamma:
-        bakerShaderData.enableMacro("DECODE_MODE", "2");
-        break;
-      case DecodeMode.RGBE:
-        bakerShaderData.enableMacro("DECODE_MODE", "3");
-        break;
-      case DecodeMode.RGBM:
-        bakerShaderData.enableMacro("DECODE_MODE", "4");
-        break;
-    }
+    bakerShaderData.enableMacro("DECODE_MODE", decodeMode + "");
 
     for (let face = 0; face < 6; face++) {
       for (let lod = 0; lod < bakerMipmapCount; lod++) {

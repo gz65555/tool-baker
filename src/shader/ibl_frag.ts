@@ -19,7 +19,7 @@ float pow2( const in float x ) {
 }
 
 vec4 RGBEToLinear(vec4 value) {
-    return vec4( step(0.0, value.a) * value.rgb * exp2( value.a * 255.0 - 128.0 ), 1.0 );
+    return vec4( value.rgb * exp2( value.a * 255.0 - 128.0 ), 1.0 );
 }
 
 vec4 RGBMToLinear(vec4 value, float maxRange ) {
@@ -33,13 +33,13 @@ vec4 gammaToLinear(vec4 srgbIn){
 
 vec4 toLinear(vec4 color){
     vec4 linear;
-    #if (DECODE_MODE == 1)
+    #if (DECODE_MODE == 0)
         linear = color;
-    #elif (DECODE_MODE == 2)
+    #elif (DECODE_MODE == 1)
         linear = gammaToLinear(color);
-    #elif (DECODE_MODE == 3)
+    #elif (DECODE_MODE == 2)
         linear = RGBEToLinear(color);
-    #elif (DECODE_MODE == 4)
+    #elif (DECODE_MODE == 3)
         linear = RGBMToLinear(color, 5.0);
     #endif
 

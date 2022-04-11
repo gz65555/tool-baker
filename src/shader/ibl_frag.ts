@@ -7,6 +7,7 @@ varying vec2 v_uv;
 uniform samplerCube environmentMap;
 uniform float face;
 uniform float lodRoughness;
+uniform float u_textureSize;
 
 #define PI 3.14159265359
 #define RECIPROCAL_PI 0.31830988618
@@ -92,9 +93,17 @@ vec3 specular(vec3 N) {
         vec3 L  = normalize(2.0 * dot(V, H) * H - V);
 
         float NdotL = max(dot(N, L), 0.0);
+        
         if(NdotL > 0.0)
         {
-            vec4 samplerColor = texture(environmentMap, L);
+            float dotNH = dot(N,H);
+            float D   = D_GGX(lodRoughness, dotNH);
+            float pdf = (D * dotNH / (4.0 * dotNH)) + 0.0001; 
+            float saTexel  = 4.0 * PI / (6.0 * u_textureSize * u_textureSize);
+            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+            float mipLevel = lodRoughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+            
+            vec4 samplerColor = textureCubeLodEXT(environmentMap, L, mipLevel);
             vec3 linearColor = toLinear(samplerColor).rgb;
 
             prefilteredColor += linearColor * NdotL;

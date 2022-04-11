@@ -30,7 +30,8 @@ export class IBLBaker {
     const engine = texture.engine;
     const originalScene = engine.sceneManager.activeScene;
     const isPaused = engine.isPaused;
-    const bakerSize = 256;
+    const bakerSize = texture.width;
+    const bakerMipmapCount = texture.mipmapCount;
 
     engine.pause();
 
@@ -47,8 +48,6 @@ export class IBLBaker {
     bakerRenderer.setMaterial(bakerMaterial);
 
     const renderColorTexture = new TextureCube(engine, bakerSize);
-    const bakerMipmapCount = renderColorTexture.mipmapCount;
-
     renderColorTexture.filterMode = TextureFilterMode.Trilinear;
     const renderTarget = new RenderTarget(engine, bakerSize, bakerSize, renderColorTexture, TextureFormat.Depth);
     renderTarget.autoGenerateMipmaps = false;

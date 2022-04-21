@@ -6,10 +6,12 @@ import {
   LoadItem,
   resourceLoader,
   ResourceManager,
-  TextureCubeFace,
   TextureCube,
+  TextureCubeFace,
   Vector3
 } from "oasis-engine";
+
+const PI = Math.PI;
 
 interface IHDRHeader {
   /**
@@ -26,51 +28,52 @@ interface IHDRHeader {
   dataPosition: number;
 }
 
-// @ts-ignore
-@resourceLoader("HDR", ["hdr"])
-class HDRLoader extends Loader<TextureCube> {
-  private static _cubeSize = 256;
+@resourceLoader("HDR-RGBE", ["hdr"])
+class HDRRGBELoader extends Loader<TextureCube> {
+  private static _rightBottomBack = new Vector3(1.0, -1.0, -1.0);
+  private static _rightBottomFront = new Vector3(1.0, -1.0, 1.0);
+  private static _rightUpBack = new Vector3(1.0, 1.0, -1.0);
+  private static _rightUpFront = new Vector3(1.0, 1.0, 1.0);
+  private static _leftBottomBack = new Vector3(-1.0, -1.0, -1.0);
+  private static _leftBottomFront = new Vector3(-1.0, -1.0, 1.0);
+  private static _leftUpBack = new Vector3(-1.0, 1.0, -1.0);
+  private static _leftUpFront = new Vector3(-1.0, 1.0, 1.0);
 
   private static _faceRight = [
-    new Vector3(1.0, -1.0, -1.0),
-    new Vector3(1.0, -1.0, 1.0),
-    new Vector3(1.0, 1.0, -1.0),
-    new Vector3(1.0, 1.0, 1.0)
+    HDRRGBELoader._rightBottomBack,
+    HDRRGBELoader._rightBottomFront,
+    HDRRGBELoader._rightUpBack,
+    HDRRGBELoader._rightUpFront
   ];
-
   private static _faceLeft = [
-    new Vector3(-1.0, -1.0, 1.0),
-    new Vector3(-1.0, -1.0, -1.0),
-    new Vector3(-1.0, 1.0, 1.0),
-    new Vector3(-1.0, 1.0, -1.0)
+    HDRRGBELoader._leftBottomFront,
+    HDRRGBELoader._leftBottomBack,
+    HDRRGBELoader._leftUpFront,
+    HDRRGBELoader._leftUpBack
   ];
-
   private static _faceUp = [
-    new Vector3(-1.0, -1.0, 1.0),
-    new Vector3(1.0, -1.0, 1.0),
-    new Vector3(-1.0, -1.0, -1.0),
-    new Vector3(1.0, -1.0, -1.0)
+    HDRRGBELoader._leftBottomFront,
+    HDRRGBELoader._rightBottomFront,
+    HDRRGBELoader._leftBottomBack,
+    HDRRGBELoader._rightBottomBack
   ];
-
   private static _faceBottom = [
-    new Vector3(-1.0, 1.0, -1.0),
-    new Vector3(1.0, 1.0, -1.0),
-    new Vector3(-1.0, 1.0, 1.0),
-    new Vector3(1.0, 1.0, 1.0)
+    HDRRGBELoader._leftUpBack,
+    HDRRGBELoader._rightUpBack,
+    HDRRGBELoader._leftUpFront,
+    HDRRGBELoader._rightUpFront
   ];
-
   private static _faceFront = [
-    new Vector3(-1.0, -1.0, -1.0),
-    new Vector3(1.0, -1.0, -1.0),
-    new Vector3(-1.0, 1.0, -1.0),
-    new Vector3(1.0, 1.0, -1.0)
+    HDRRGBELoader._leftBottomBack,
+    HDRRGBELoader._rightBottomBack,
+    HDRRGBELoader._leftUpBack,
+    HDRRGBELoader._rightUpBack
   ];
-
   private static _faceBack = [
-    new Vector3(1.0, -1.0, 1.0),
-    new Vector3(-1.0, -1.0, 1.0),
-    new Vector3(1.0, 1.0, 1.0),
-    new Vector3(-1.0, 1.0, 1.0)
+    HDRRGBELoader._rightBottomFront,
+    HDRRGBELoader._leftBottomFront,
+    HDRRGBELoader._rightUpFront,
+    HDRRGBELoader._leftUpFront
   ];
 
   private static _tempVector3 = new Vector3();
@@ -134,12 +137,15 @@ class HDRLoader extends Loader<TextureCube> {
         v.normalize();
 
         const color = this._calcProjectionSpherical(v, pixels, inputWidth, inputHeight);
+        // this._RGBEToLinear(color);
+        // this._linearToRGBM(color, 5);
 
         // 4 channels per pixels
-        textureArray[y * texSize * 4 + x * 4] = color.r;
-        textureArray[y * texSize * 4 + x * 4 + 1] = color.g;
-        textureArray[y * texSize * 4 + x * 4 + 2] = color.b;
-        textureArray[y * texSize * 4 + x * 4 + 3] = color.a;
+        const index = y * texSize * 4 + x * 4;
+        textureArray[index] = color.r;
+        textureArray[index + 1] = color.g;
+        textureArray[index + 2] = color.b;
+        textureArray[index + 3] = color.a;
 
         xv1.add(rotDX1);
         xv2.add(rotDX2);
@@ -157,18 +163,18 @@ class HDRLoader extends Loader<TextureCube> {
     inputWidth: number,
     inputHeight: number
   ): Color {
-    let theta = Math.atan2(vDir.z, vDir.x);
+    let theta = Math.atan2(vDir.z, -vDir.x);
     let phi = Math.acos(vDir.y);
 
-    while (theta < -Math.PI) {
-      theta += 2 * Math.PI;
+    while (theta < -PI) {
+      theta += 2 * PI;
     }
-    while (theta > Math.PI) {
-      theta -= 2 * Math.PI;
+    while (theta > PI) {
+      theta -= 2 * PI;
     }
 
-    let dx = theta / Math.PI;
-    let dy = phi / Math.PI;
+    let dx = theta / PI;
+    let dy = phi / PI;
 
     // recenter.
     dx = dx * 0.5 + 0.5;
@@ -188,10 +194,11 @@ class HDRLoader extends Loader<TextureCube> {
     }
 
     const inputY = inputHeight - py - 1;
-    const r = pixels[inputY * inputWidth * 4 + px * 4];
-    const g = pixels[inputY * inputWidth * 4 + px * 4 + 1];
-    const b = pixels[inputY * inputWidth * 4 + px * 4 + 2];
-    const a = pixels[inputY * inputWidth * 4 + px * 4 + 3];
+    const index = inputY * inputWidth * 4 + px * 4;
+    const r = pixels[index];
+    const g = pixels[index + 1];
+    const b = pixels[index + 2];
+    const a = pixels[index + 3];
 
     return new Color(r, g, b, a);
   }
@@ -269,6 +276,7 @@ class HDRLoader extends Loader<TextureCube> {
 
   private static _readPixels(buffer: Uint8Array, width: number, height: number): Uint8Array {
     const scanline_width = width;
+    const byteLength = buffer.byteLength;
 
     const data_rgba = new Uint8Array(4 * width * height);
 
@@ -279,7 +287,7 @@ class HDRLoader extends Loader<TextureCube> {
     const scanline_buffer = new Uint8Array(ptr_end);
     let num_scanlines = height; // read in each successive scanline
 
-    while (num_scanlines > 0 && pos < buffer.byteLength) {
+    while (num_scanlines > 0 && pos < byteLength) {
       rgbeStart[0] = buffer[pos++];
       rgbeStart[1] = buffer[pos++];
       rgbeStart[2] = buffer[pos++];
@@ -295,7 +303,7 @@ class HDRLoader extends Loader<TextureCube> {
       let ptr = 0,
         count;
 
-      while (ptr < ptr_end && pos < buffer.byteLength) {
+      while (ptr < ptr_end && pos < byteLength) {
         count = buffer[pos++];
         const isEncodedRun = count > 128;
         if (isEncodedRun) count -= 128;
@@ -325,13 +333,13 @@ class HDRLoader extends Loader<TextureCube> {
       for (let i = 0; i < l; i++) {
         let off = 0;
         data_rgba[offset] = scanline_buffer[i + off];
-        off += scanline_width; //1;
+        off += scanline_width;
 
         data_rgba[offset + 1] = scanline_buffer[i + off];
-        off += scanline_width; //1;
+        off += scanline_width;
 
         data_rgba[offset + 2] = scanline_buffer[i + off];
-        off += scanline_width; //1;
+        off += scanline_width;
 
         data_rgba[offset + 3] = scanline_buffer[i + off];
         offset += 4;
@@ -343,10 +351,29 @@ class HDRLoader extends Loader<TextureCube> {
     return data_rgba;
   }
 
+  private static _RGBEToLinear(color: Color): void {
+    const scaleFactor = Math.pow(2, color.a - 128) / 255;
+    color.r *= scaleFactor;
+    color.g *= scaleFactor;
+    color.b *= scaleFactor;
+    color.a = 1;
+  }
+
+  private static _linearToRGBM(color: Color, maxRange: number): void {
+    const maxRGB = Math.max(color.r, Math.max(color.g, color.b));
+    let M = Math.min(maxRGB / maxRange, 1);
+    M = Math.ceil(M * 255);
+    const scaleFactor = 65025 / (M * maxRange); // 255 * (255 / (M * maxRange) )
+
+    color.r *= scaleFactor;
+    color.g *= scaleFactor;
+    color.b *= scaleFactor;
+    color.a *= M;
+  }
+
   load(item: LoadItem, resourceManager: ResourceManager): AssetPromise<TextureCube> {
     return new AssetPromise((resolve, reject) => {
       const engine = resourceManager.engine;
-      const cubeSize = HDRLoader._cubeSize;
 
       resourceManager
         .load<ArrayBuffer>({
@@ -355,9 +382,11 @@ class HDRLoader extends Loader<TextureCube> {
         })
         .then((buffer) => {
           const uint8Array = new Uint8Array(buffer);
-          const { width, height, dataPosition } = HDRLoader._parseHeader(uint8Array);
-          const pixels = HDRLoader._readPixels(uint8Array.subarray(dataPosition), width, height);
-          const cubeMapData = HDRLoader._convertToCubemap(pixels, width, height, cubeSize);
+          const { width, height, dataPosition } = HDRRGBELoader._parseHeader(uint8Array);
+          const pixels = HDRRGBELoader._readPixels(uint8Array.subarray(dataPosition), width, height);
+          const cubeSize = height >> 1;
+
+          const cubeMapData = HDRRGBELoader._convertToCubemap(pixels, width, height, cubeSize);
           const texture = new TextureCube(engine, cubeSize);
 
           for (let faceIndex = 0; faceIndex < 6; faceIndex++) {

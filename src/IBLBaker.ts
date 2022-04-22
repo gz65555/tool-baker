@@ -6,10 +6,9 @@ import {
   RenderTarget,
   Scene,
   Shader,
-  TextureCubeFace,
   TextureCube,
-  TextureFilterMode,
-  TextureFormat
+  TextureCubeFace,
+  TextureFilterMode
 } from "oasis-engine";
 import { DecodeMode } from "./enums/DecodeMode";
 import frag from "./shader/ibl_frag";
@@ -51,7 +50,7 @@ export class IBLBaker {
     const renderColorTexture = new TextureCube(engine, bakerSize);
     texture.filterMode = TextureFilterMode.Trilinear;
     renderColorTexture.filterMode = TextureFilterMode.Trilinear;
-    const renderTarget = new RenderTarget(engine, bakerSize, bakerSize, renderColorTexture, TextureFormat.Depth);
+    const renderTarget = new RenderTarget(engine, bakerSize, bakerSize, renderColorTexture);
     renderTarget.autoGenerateMipmaps = false;
     bakerCamera.renderTarget = renderTarget;
 

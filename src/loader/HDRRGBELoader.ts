@@ -115,12 +115,12 @@ class HDRRGBELoader extends Loader<TextureCube> {
   ): Uint8Array {
     const textureArray = new Uint8Array(texSize * texSize * 4);
     const rotDX1 = this._tempVector3
-      .setValue(0, 0, 0)
+      .set(0, 0, 0)
       .add(faceData[1])
       .subtract(faceData[0])
       .scale(1 / texSize);
     const rotDX2 = this._temp2Vector3
-      .setValue(0, 0, 0)
+      .set(0, 0, 0)
       .add(faceData[3])
       .subtract(faceData[2])
       .scale(1 / texSize);
@@ -129,11 +129,11 @@ class HDRRGBELoader extends Loader<TextureCube> {
     let fy = 0;
 
     for (let y = 0; y < texSize; y++) {
-      let xv1 = this._temp3Vector3.setValue(0, 0, 0).add(faceData[0]);
-      let xv2 = this._temp4Vector3.setValue(0, 0, 0).add(faceData[2]);
+      let xv1 = this._temp3Vector3.set(0, 0, 0).add(faceData[0]);
+      let xv2 = this._temp4Vector3.set(0, 0, 0).add(faceData[2]);
 
       for (let x = 0; x < texSize; x++) {
-        const v = this._temp5Vector3.setValue(0, 0, 0).add(xv2).subtract(xv1).scale(fy).add(xv1);
+        const v = this._temp5Vector3.set(0, 0, 0).add(xv2).subtract(xv1).scale(fy).add(xv1);
         v.normalize();
 
         const color = this._calcProjectionSpherical(v, pixels, inputWidth, inputHeight);
@@ -163,7 +163,7 @@ class HDRRGBELoader extends Loader<TextureCube> {
     inputWidth: number,
     inputHeight: number
   ): Color {
-    let theta = Math.atan2(vDir.z, -vDir.x);
+    let theta = Math.atan2(vDir.z, vDir.x);
     let phi = Math.acos(vDir.y);
 
     while (theta < -PI) {

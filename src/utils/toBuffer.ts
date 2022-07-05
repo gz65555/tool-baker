@@ -6,7 +6,7 @@ export function toBuffer(bakedTexture: TextureCube, sh: SphericalHarmonics3): Ar
 
   const float32Array = new Float32Array(27);
   const floatByteLenth = 27 * 4;
-  sh.toArray(float32Array);
+  sh.copyToArray(float32Array);
 
   const uint8Arrays = [];
   let uint8ByteLength = 0;

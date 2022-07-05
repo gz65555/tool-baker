@@ -37,10 +37,10 @@ export class SphericalHarmonics3Baker {
 
           switch (decodeMode) {
             case DecodeMode.Linear:
-              color.setValue(data[dataOffset], data[dataOffset + 1], data[dataOffset + 2], 0);
+              color.set(data[dataOffset], data[dataOffset + 1], data[dataOffset + 2], 0);
               break;
             case DecodeMode.Gamma:
-              color.setValue(
+              color.set(
                 Color.gammaToLinearSpace(data[dataOffset] / 255),
                 Color.gammaToLinearSpace(data[dataOffset + 1] / 255),
                 Color.gammaToLinearSpace(data[dataOffset + 2] / 255),
@@ -69,22 +69,22 @@ export class SphericalHarmonics3Baker {
 
           switch (faceIndex) {
             case TextureCubeFace.PositiveX:
-              direction.setValue(1, -v, -u);
+              direction.set(1, -v, -u);
               break;
             case TextureCubeFace.NegativeX:
-              direction.setValue(-1, -v, u);
+              direction.set(-1, -v, u);
               break;
             case TextureCubeFace.PositiveY:
-              direction.setValue(u, 1, v);
+              direction.set(u, 1, v);
               break;
             case TextureCubeFace.NegativeY:
-              direction.setValue(u, -1, -v);
+              direction.set(u, -1, -v);
               break;
             case TextureCubeFace.PositiveZ:
-              direction.setValue(u, -v, 1);
+              direction.set(u, -v, 1);
               break;
             case TextureCubeFace.NegativeZ:
-              direction.setValue(-u, -v, -1);
+              direction.set(-u, -v, -1);
               break;
           }
 
@@ -106,15 +106,15 @@ export class SphericalHarmonics3Baker {
 
   private static _RGBEToLinear(r: number, g: number, b: number, a: number, out: Color) {
     if (a === 0) {
-      out.setValue(0, 0, 0, 1);
+      out.set(0, 0, 0, 1);
     } else {
       const scale = Math.pow(2, a - 128) / 255;
-      out.setValue(r * scale, g * scale, b * scale, 1);
+      out.set(r * scale, g * scale, b * scale, 1);
     }
   }
 
   private static _RGBMToLinear(r: number, g: number, b: number, a: number, out: Color) {
     const scale = a / 13005; // (a * 5) / 255 / 255;
-    out.setValue(r * scale, g * scale, b * scale, 1);
+    out.set(r * scale, g * scale, b * scale, 1);
   }
 }

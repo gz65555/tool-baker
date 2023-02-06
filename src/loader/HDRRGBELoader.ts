@@ -395,6 +395,7 @@ class HDRRGBELoader extends Loader<TextureCube> {
           texture.generateMipmaps();
           resolve(texture);
         })
+        // @ts-ignore
         .catch(reject);
     });
   }

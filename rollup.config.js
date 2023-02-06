@@ -1,10 +1,8 @@
 import resolve from "@rollup/plugin-node-resolve";
-import babel from "@rollup/plugin-babel";
 import pkg from "./package.json";
+import { swc, defineRollupSwcOption } from "rollup-plugin-swc3";
 
 const extensions = [".js", ".jsx", ".ts", ".tsx"];
-
-const name = pkg.name;
 
 export default {
 	input: "./src/index.ts",
@@ -17,27 +15,17 @@ export default {
 		resolve({ extensions }),
 
 		// Compile TypeScript/JavaScript files
-		babel({
-			babelHelpers: "bundled",
-			presets: [
-				[
-					"@babel/preset-env",
-					{
-						loose: true,
-						targets: ">0.3%, not dead",
-						bugfixes: true,
-					},
-				],
-				"@babel/preset-typescript",
-			],
-			extensions,
-			include: ["src/**/*"],
-			plugins: [
-				["@babel/plugin-proposal-decorators", { legacy: true }],
-				["@babel/plugin-proposal-class-properties", { loose: true }],
-				"@babel/plugin-proposal-optional-chaining",
-			],
-		}),
+		swc(
+			defineRollupSwcOption({
+				include: /\.[mc]?[jt]sx?$/,
+				exclude: /node_modules/,
+				jsc: {
+					loose: true,
+					externalHelpers: true
+				},
+				sourceMaps: true
+			})
+		),
 	],
 
 	output: [
